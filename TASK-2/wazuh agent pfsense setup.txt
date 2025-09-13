@@ -1,0 +1,75 @@
+AS We Got errors while doing with rsyslog , so we choose agent method.
+
+in pfSense shell !
+
+1) enabled FreeBSD in /usr/local/etc/pkg/repos/pfSense.conf & /usr/local/etc/pkg/repos/FreeBSD.conf
+
+2) add IGNORE_OSVERSION=yes in /usr/local/etc/pkg.conf
+
+3) pkg update -f
+
+4) pkg search wazuh-agent 
+
+my version was 15 no wazuh appear so i did 
+
+5) setenv ABI FreeBSD:14:amd64
+
+6) now it appears when i: pkg search wazuh-agent
+
+7) pkg install wazuh-agent-4.12.0 or what version appers change it 4.xx.x
+
+but receive error,
+New version of pkg detected; it needs to be installed first. The following 1 package(s) will be affected (of checked): Installed packages to be UPGRADED: pkg: 1.21.3_4 -> 2.2.2 [FreeBSD] Number of packages to be upgraded: 1 The process will require 8 MiB more space. 14 MiB to be downloaded. 
+
+if u see this dont install it , just press N or n
+
+follow commands below then, 
+
+8) pkg fetch -y wazuh-agent-4.12.0
+
+9) pkg add /var/cache/pkg/wazuh-agent-4.12.0.pkg
+
+10) unsetenv ABI
+
+wazuh agent is install now !
+_____________________________________________________________________________
+
+pkg clean
+
+cp /etc/localtime /var/ossec/etc/
+
+vi /var/ossec/etc/ossec.conf 
+
+edit, 
+Set Wazuh server IP And protocol to tcp And in global logall yes
+
+also edit,
+Add a <localfile> section to monitor the firewall log 
+  <localfile> 
+    <log_format>syslog</log_format> 
+    <location>/var/log/filter.log</location> 
+  </localfile>
+
+sysrc wazuh_agent_enable="YES"
+
+sysrc wazuh_agent_start="YES"
+
+service wazuh-agent start
+
+service wazuh-agent status (makesure everything is running)
+
+crontab -e
+add,
+0 4 * * * find /var/ossec/logs/ossec/ -mindepth 1 -maxdepth 1 -mtime +30 -type d -exec rm -rf {} \; >/dev/null 2>&1
+
+chmod 644 /var/log/filter.log
+
+service wazuh-agent restart
+
+now start wazuh VM , open dashboard u will see the pfsense machine
+
+NOTE: when ever u start pfsense VM , the agent will not start automatically and its good for burst of logs .
+so start agent when neded using service wazuh-agent start
+__________________________________________________________________________________________
+
+Now Add Decoders and Rules , Already given separate file 
